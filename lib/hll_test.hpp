@@ -18,7 +18,7 @@ constexpr size_t comm = 100;
 constexpr size_t side = discrete_sqrt(devices * 2000);
 constexpr size_t height = 100;
 constexpr size_t endtime = 10;
-constexpr size_t estimated_diameter = 5;
+constexpr size_t estimated_diameter = 20;
 
 constexpr float hue_scale = 360.0f/(side+height);
 
