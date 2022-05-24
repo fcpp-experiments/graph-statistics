@@ -1,4 +1,4 @@
-// Copyright © 2021 Giorgio Audrito. All Rights Reserved.
+// Copyright © 2022 Giorgio Audrito. All Rights Reserved.
 
 #include "lib/fcpp.hpp"
 
@@ -39,6 +39,12 @@ namespace tags {
 }
 }
 
+template <typename O>
+O& operator<<(O& o, hll_t const& c) {
+    o << "hll(" << c.size() << ")";
+    return o;
+}
+
 //! @brief Namespace containing the libraries of coordination routines.
 namespace coordination {
 
@@ -50,7 +56,7 @@ namespace tags {
     //! @brief Number of nodes through WMP collection.
     struct wmp_count {};
     //! @brief Harmonic centrality.
-    struct centrality {};
+    struct harmonic_centrality {};
     //! @brief Distance of the current node.
     struct my_distance {};
     //! @brief Color representing the distance of the current node.
@@ -102,7 +108,7 @@ FUN tuple<hll_t, real_t> hyperANF(ARGS, size_t depth, bool source) { CODE
         hll_t rc;
         real_t rr;
         fcpp::tie(rc, rr) = hyperANF(CALL, depth-1, source);
-        hll_t nc;
+        hll_t nc(rc);
         fold_hood(CALL, [&](hll_t const& d, nullptr_t){
             nc.insert(d);
             return nullptr;
@@ -129,7 +135,10 @@ using rectangle_d = distribution::rect_n<1, 0, 0, side, side>;
 constexpr size_t dim = 2;
 
 template <typename T>
-using multi_aggregator = aggregator::combine<aggregator::min<T>, aggregator::mean<T>, aggregator::max<T>>;
+using count_aggregator = aggregator::combine<aggregator::min<T>, aggregator::mean<T>, aggregator::max<T>>;
+
+template <typename T>
+using centrality_aggregator = aggregator::combine<aggregator::min<T>, aggregator::mean<T>, aggregator::max<T>, aggregator::list<T>>;
 
 DECLARE_OPTIONS(opt,
     parallel<false>,
@@ -140,7 +149,7 @@ DECLARE_OPTIONS(opt,
     exports<vec<dim>, real_t, field<real_t>, tuple<real_t, times_t>, hll_t>,
     log_schedule<sequence::periodic_n<1, 0, 1, endtime>>,
     node_attributes<
-                //        url,                std::string,
+//        url,                std::string,
         uid,                device_t
     >,
     tuple_store<
@@ -148,7 +157,7 @@ DECLARE_OPTIONS(opt,
         true_count,         double,
         hll_count,          double,
         wmp_count,          double,
-        centrality,         double,
+        harmonic_centrality,         double,
         my_distance,        double,
         distance_c,         color,
         centrality_c,       color,
@@ -157,15 +166,14 @@ DECLARE_OPTIONS(opt,
     >,
     aggregators<
         true_count,         aggregator::mean<double>,
-        hll_count,          multi_aggregator<double>,
-        wmp_count,          multi_aggregator<double>,
-                //        centrality,         multi_aggregator<double>
-        centrality,         aggregator::list<double>
+        hll_count,          count_aggregator<double>,
+        wmp_count,          count_aggregator<double>,
+        harmonic_centrality,centrality_aggregator<double>
     >,
     spawn_schedule<sequence::multiple_n<devices, 0>>,
     init<x, rectangle_d>,
     connector<connect::fixed<comm, 1, dim>>,
-    symmetric<false>,
+    symmetric<true>,
     shape_tag<node_shape>,
     size_tag<size>,
     color_tag<distance_c,centrality_c>

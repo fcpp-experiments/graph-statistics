@@ -1,4 +1,4 @@
-// Copyright © 2021 Giorgio Audrito. All Rights Reserved.
+// Copyright © 2022 Giorgio Audrito. All Rights Reserved.
 
 #include "lib/hll_test.hpp"
 
@@ -17,9 +17,9 @@ MAIN() {
     node.storage(tags::true_count{}) = devices;
     node.storage(tags::hll_count{}) = hll_size_count(CALL);
     node.storage(tags::wmp_count{}) = wmp_size_count(CALL);
-    real_t centrality = get<1>(hyperANF(CALL, (2*side+height)/comm, true));
-    node.storage(tags::centrality{}) = centrality;
-    node.storage(tags::centrality_c{}) = color::hsva(centrality*3.6, 1, 1);
+    real_t harmonic_centrality = get<1>(hyperANF(CALL, (2*side+height)/comm, true));
+    node.storage(tags::harmonic_centrality{}) = harmonic_centrality;
+    node.storage(tags::centrality_c{}) = color::hsva(harmonic_centrality*3.6, 1, 1);
 }
 
 }
