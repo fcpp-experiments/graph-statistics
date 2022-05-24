@@ -121,21 +121,22 @@ FUN real_t wmp_size_count(ARGS) { CODE
 }
 FUN_EXPORT wmp_size_count_t = export_list<bis_distance_t, wmp_collection_t<real_t>, broadcast_t<real_t,real_t>>;
 
-FUN tuple<hll_t, real_t> hyperANF(ARGS, size_t depth, bool source) { CODE
+FUN tuple<hll_t, real_t, real_t> hyperANF(ARGS, size_t depth, bool source) { CODE
     if (depth == 0) {
         hll_t c;
-        c.insert(node.uid);
-        return {c, 0};
+        if (source) c.insert(node.uid);
+        return {c, 0, 0};
     } else {
         hll_t rc;
-        real_t rr;
-        fcpp::tie(rc, rr) = hyperANF(CALL, depth-1, source);
+        real_t rr, rs;
+        fcpp::tie(rc, rr, rs) = hyperANF(CALL, depth-1, source);
         hll_t nc(rc);
         fold_hood(CALL, [&](hll_t const& d, nullptr_t){
             nc.insert(d);
             return nullptr;
         }, nbr(CALL, rc), nullptr);
-        return {nc, rr + (nc.size() - rc.size())/depth};
+        real_t s = nc.size() - rc.size();
+        return {nc, rr + s/depth, rs + s*depth};
     }
 }
 FUN_EXPORT hyperANF_t = export_list<hll_t>;
@@ -160,9 +161,10 @@ FUN void graph_statistics(ARGS) { CODE
     // node centrality
     node.storage(tags::degree_centrality{}) = degree(CALL);
     node.storage(tags::pagerank_centrality{}) = page_rank(CALL);
-    real_t harmonic_centrality = get<1>(hyperANF(CALL, estimated_diameter, true));
-    node.storage(tags::harmonic_centrality{}) = harmonic_centrality;
-    node.storage(tags::centrality_c{}) = color::hsva(harmonic_centrality*3.6, 1, 1);
+    auto anf = hyperANF(CALL, estimated_diameter, true);
+    node.storage(tags::closeness_centrality{}) = 1 / get<2>(anf);
+    node.storage(tags::harmonic_centrality{}) = get<1>(anf);
+    node.storage(tags::centrality_c{}) = color::hsva(get<1>(anf)*3.6, 1, 1);
 }
 FUN_EXPORT graph_statistics_t = export_list<mpc_size_count_t, hll_size_count_t, degree_t, page_rank_t, hyperANF_t>;
 
