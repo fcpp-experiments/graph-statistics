@@ -13,13 +13,9 @@ namespace coordination {
 
 //! @brief Main function.
 MAIN() {
-    node.velocity() = neighbour_elastic_force(CALL, 300, 0.03) + point_elastic_force(CALL, make_vec(side,side)/2, 0, 0.005);
-    node.storage(tags::true_count{}) = devices;
-    node.storage(tags::hll_count{}) = hll_size_count(CALL);
+    graph_statistics(CALL);
     node.storage(tags::wmp_count{}) = wmp_size_count(CALL);
-    real_t harmonic_centrality = get<1>(hyperANF(CALL, (2*side+height)/comm, true));
-    node.storage(tags::harmonic_centrality{}) = harmonic_centrality;
-    node.storage(tags::centrality_c{}) = color::hsva(harmonic_centrality*3.6, 1, 1);
+    disperser(CALL);
 }
 
 }
@@ -38,7 +34,7 @@ int main() {
     std::stringstream ssnodes(twonodes);
     std::stringstream ssarcs(onearc);
     //! @brief The network object type.
-    using net_t = component::interactive_graph_simulator<opt>::net;
+    using net_t = component::interactive_graph_simulator<opt<true>>::net;
     //! @brief The initialisation values.
     auto init_v = common::make_tagged_tuple<name, nodesinput, arcsinput>(
         "HyperLogLog Evaluation",
