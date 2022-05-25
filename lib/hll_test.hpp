@@ -213,7 +213,7 @@ using centrality_aggregator = aggregator::combine<aggregator::min<T>, aggregator
 
 template <bool sync>
 DECLARE_OPTIONS(opt,
-    parallel<false>,
+    parallel<true>,
     synchronised<sync>,
     program<coordination::main>,
     round_schedule<round_s<sync>>,
