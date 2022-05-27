@@ -24,7 +24,7 @@ using namespace fcpp;
 
 int main() {
     plot_t p;
-    const std::string file = "input/cnr-2000-nat";
+    const std::string file = "input/cnr-2000";
     auto init_v = common::make_tagged_tuple<nodesinput, arcsinput, max_print_len, plotter>(
         file + ".nodes",
         file + ".arcs",

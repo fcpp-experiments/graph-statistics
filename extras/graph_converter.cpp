@@ -19,15 +19,15 @@ void parserow(const std::string &srow, std::vector<int> &vrow) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 3 || argc > 4) {
-        std::cout << "graph_converter <in-base> <out-base>" << std::endl;
+    if (argc != 2) {
+        std::cout << "graph_converter <file>" << std::endl;
         return 1;
     }
 
     std::string finname(std::string(argv[1]) + ".graph-txt");
     std::string flabsname(std::string(argv[1]) + ".urls");
-    std::string fnodesname(std::string(argv[2]) + ".nodes");
-    std::string farcsname(std::string(argv[2]) + ".arcs");
+    std::string fnodesname(std::string(argv[1]) + ".nodes");
+    std::string farcsname(std::string(argv[1]) + ".arcs");
 
     bool labels = true;
 

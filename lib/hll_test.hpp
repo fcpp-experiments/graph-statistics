@@ -214,8 +214,9 @@ using centrality_aggregator = aggregator::combine<aggregator::min<T>, aggregator
 using plot_t = plot::last_rows<
     aggregators<
         plot::time,                             times_t,
-        aggregator::list<harmonic_centrality>,  std::vector<double>
-    >, void, 2
+        aggregator::list<harmonic_centrality>,  std::vector<double>,
+        aggregator::list<closeness_centrality>, std::vector<double>
+    >, void, 1
 >;
 
 template <bool sync>

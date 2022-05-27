@@ -48,6 +48,12 @@ for i in input/*.graph; do
         gzip -dk $base.urls.gz
         cd ..
     fi
+    if [ ! -f $f.nodes -o $f.graph -nt $f.nodes -o ! -f $f.arcs -o $f.graph -nt $f.arcs ]; then
+        if [ ! -f  bin/run/graph_converter ]; then
+            fcpp/src/make.sh build -O graph_converter
+        fi
+        bin/run/graph_converter $f
+    fi
 done
 
 fcpp/src/make.sh "$@"

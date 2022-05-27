@@ -1,6 +1,9 @@
 *.pyc
 *.graph-txt
 *.urls
+*.arcs
+*.nodes
+*.out
 #*
 .#*
 bin/
