@@ -23,10 +23,17 @@ public class HBApp {
 	String fname = args[1]; // e.g. "data/cnr-2000-nat"
 	
 	if (args[0].equals("conv")) { 
-	    BVGraph g = BVGraph.load(fname, 2);
+	    BVGraph g = BVGraph.load(fname, 0);
+	    g.store(g,fname);
+	    g = BVGraph.load(fname, 2);	    
 	    ASCIIGraph.store(g, fname);
+	} else if (args[0].equals("conv")) { 
+
+
+	    
+	    //	    ASCIIGraph.store(g, fname);
 	} else if (args[0].equals("stats")) {
-		BVGraph g = BVGraph.load(fname, 2);
+		BVGraph g = BVGraph.load(fname, 1);
 		System.out.println("number of nodes: " + g.numNodes());
 
 		HyperBall hb = new HyperBall(g, null, 7, null, 1, 0, 0, false, true, true, null, 0);
