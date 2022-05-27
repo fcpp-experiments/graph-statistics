@@ -23,8 +23,13 @@ MAIN() {
 using namespace fcpp;
 
 int main() {
-    component::batch_graph_simulator<opt<true>>::net network{common::make_tagged_tuple<nodesinput,arcsinput>("input/outstar.nodes", "input/outstar.arcs")};
-    //    component::batch_graph_simulator<opt>::net network{common::make_tagged_tuple<nodesinput,arcsinput>("input/nodes.txt", "input/arcs.txt")};
+    const std::string file = "input/outstar";
+    auto init_v = common::make_tagged_tuple<nodesinput, arcsinput, max_print_len>(
+        file + ".nodes",
+        file + ".arcs",
+        0
+    );
+    component::batch_graph_simulator<opt<true>>::net network{init_v};
     network.run();
     return 0;
 }

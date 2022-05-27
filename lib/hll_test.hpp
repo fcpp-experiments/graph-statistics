@@ -221,7 +221,7 @@ DECLARE_OPTIONS(opt,
     exports<coordination::main_t>,
     log_schedule<sequence::periodic_n<1, 0, 1, endtime>>,
     node_attributes<
-//        url,                std::string,
+        url,                std::string,
         uid,                device_t
     >,
     tuple_store<
@@ -253,7 +253,7 @@ DECLARE_OPTIONS(opt,
     spawn_schedule<sequence::multiple_n<devices, 0>>,
     init<x, rectangle_d>,
     connector<connect::fixed<comm, 1, dim>>,
-    symmetric<true>,
+    symmetric<false>,
     shape_tag<node_shape>,
     size_tag<node_size>,
     color_tag<distance_c,centrality_c>
