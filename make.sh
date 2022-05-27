@@ -21,14 +21,20 @@ for i in input/*.graph; do
         echo "wget http://data.law.di.unimi.it/webdata/cnr-2000/$base.properties; mv $base.properties input/" >&2
         continue
     fi
-    if [ ! -f $f.graph-txt -o $f.graph -nt $f.graph-txt ]; then
+    if [ ! -f $f.graph-txt -o $f.graph -nt $f.graph-txt -o ! -f $f.out -o $f.graph -nt $f.out ]; then
         mkdir java/data
-        cp $i $f.properties java/data
+        cp $f.* java/data
         cd java
         mvn compile
-        mvn exec:java -Dexec.mainClass="HBApp" -Dexec.args="conv data/$base"
+        if [ ! -f $f.graph-txt -o $f.graph -nt $f.graph-txt ]; then
+            mvn exec:java -Dexec.mainClass="HBApp" -Dexec.args="conv data/$base"
+            mv data/$base.graph-txt ../input/
+        fi
+        if [ ! -f $f.out -o $f.graph -nt $f.out  ]; then
+            mvn exec:java -Dexec.mainClass="HBApp" -Dexec.args="stats data/$base"
+            mv data/$base.out ../input/
+        fi
         cd ..
-        mv java/data/$base.graph-txt input/
         rm -rf java/data
     fi
     if [ ! -f $f.urls.gz -a ! -f $f.urls ]; then
