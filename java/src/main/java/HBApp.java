@@ -14,24 +14,24 @@ public class HBApp {
     public HBApp() throws IOException {
     }
 
-    public static final String syntax = "HBApp {stats|conv} <file>";
+    public static final String syntax = "HBApp {stats|conv|enc} <file>";
     
     public static void main(String[] args) throws IOException {
 	if (args.length < 2)
 	    System.out.println(syntax);
 
-	String fname = args[1]; // e.g. "data/cnr-2000-nat"
-	
-	if (args[0].equals("conv")) { 
+	String fname = args[1];
+	if (args[0].equals("conv")) {
 	    BVGraph g = BVGraph.load(fname, 0);
 	    g.store(g,fname);
 	    g = BVGraph.load(fname, 2);	    
 	    ASCIIGraph.store(g, fname);
-	} else if (args[0].equals("conv")) { 
-
-
-	    
-	    //	    ASCIIGraph.store(g, fname);
+	} else if (args[0].equals("enc")) {
+        try {
+            BVGraph.main(new String[]{"-g", "ASCIIGraph", fname, fname});
+        } catch (Exception e) {
+            System.out.println("Encoding failed with error " + e.toString());
+        }
 	} else if (args[0].equals("stats")) {
 		BVGraph g = BVGraph.load(fname, 1);
 		System.out.println("number of nodes: " + g.numNodes());

@@ -1,9 +1,13 @@
 *.pyc
+*.graph-txt
+*.urls
 #*
 .#*
 bin/
 doc/
 output/
 plot/
+java/data
+java/target
 .vagrant/
 .DS_Store
