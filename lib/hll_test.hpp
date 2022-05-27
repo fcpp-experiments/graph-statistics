@@ -211,6 +211,13 @@ using count_aggregator = aggregator::combine<aggregator::min<T>, aggregator::mea
 template <typename T>
 using centrality_aggregator = aggregator::combine<aggregator::min<T>, aggregator::mean<T>, aggregator::max<T>, aggregator::list<T>>;
 
+using plot_t = plot::last_rows<
+    aggregators<
+        plot::time,                             times_t,
+        aggregator::list<harmonic_centrality>,  std::vector<double>
+    >, void, 2
+>;
+
 template <bool sync>
 DECLARE_OPTIONS(opt,
     parallel<true>,
@@ -250,6 +257,7 @@ DECLARE_OPTIONS(opt,
         closeness_centrality,   centrality_aggregator<double>,
         harmonic_centrality,    centrality_aggregator<double>
     >,
+    plot_type<plot_t>,
     spawn_schedule<sequence::multiple_n<devices, 0>>,
     init<x, rectangle_d>,
     connector<connect::fixed<comm, 1, dim>>,
