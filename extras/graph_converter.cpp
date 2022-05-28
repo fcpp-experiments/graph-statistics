@@ -73,14 +73,14 @@ int main(int argc, char *argv[]) {
             }
             fnodes << slab << "\t";
         }
-        fnodes << idxnode;
+        fnodes << idxnode+1;
         fnodes << std::endl;
 
         // write arcs
         std::vector<int> vrow;
         parserow(srow, vrow);
         for (auto succ : vrow) {
-            farcs << idxnode << "\t" << succ << std::endl;
+            farcs << idxnode+1 << "\t" << succ+1 << std::endl;
         }
 
         idxnode++;

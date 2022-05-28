@@ -255,6 +255,11 @@ DECLARE_OPTIONS(opt,
     round_schedule<round_s<sync>>,
     dimension<dim>,
     exports<coordination::main_t<reactive>>,
+    retain<std::conditional_t<
+        reactive,
+        metric::always,
+        metric::retain<3>
+    >>,
     log_schedule<sequence::periodic_n<1, 0, 1, endtime>>,
     node_attributes<
         url,                std::string,
