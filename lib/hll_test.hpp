@@ -18,7 +18,6 @@ constexpr size_t comm = 100;
 constexpr size_t side = discrete_sqrt(devices * 2000);
 constexpr size_t height = 100;
 constexpr size_t endtime = 10;
-constexpr size_t estimated_diameter = 20;
 
 constexpr float hue_scale = 360.0f/(side+height);
 
@@ -49,6 +48,8 @@ O& operator<<(O& o, hll_t const& c) {
 namespace coordination {
 
 namespace tags {
+    //! @brief HLL-estimated diameter.
+    struct diameter {};
     //! @brief Number of nodes.
     struct true_count {};
     //! @brief Number of nodes through HLL gossiping.
@@ -147,29 +148,31 @@ FUN real_t page_rank(ARGS) { CODE
 }
 FUN_EXPORT page_rank_t = export_list<real_t, degree_t>;
 
-FUN tuple<hll_t, real_t, real_t, bool> hyperANF(ARGS, size_t depth, bool source) { CODE
-    if (depth == 0) {
-        hll_t c;
-        if (source) c.insert(node.uid);
-        return {c, 0, 0, true};
-    } else {
-        auto t = hyperANF(CALL, depth-1, source);
-        hll_t&  rl = get<0>(t);
-        real_t& rh = get<1>(t);
-        real_t& rc = get<2>(t);
-        bool&   rb = get<3>(t);
-        real_t s = rl.size();
-        field<hll_t> nrl = nbr(CALL, rl);
-        rb = rb and self(CALL, nrl) == rl;
+FUN tuple<real_t, real_t, bool> hyperANF(ARGS) { CODE
+    tuple<real_t, real_t, bool> t{0, 0, true};
+    real_t& h = get<0>(t); // harmonic counts
+    real_t& c = get<1>(t); // closeness counts
+    bool&   u = get<2>(t); // results are unchanged?
+    hll_t l(node.uid); // running HLL counter
+    real_t ps = 0; // size at the previous depth
+    real_t cs = l.size(); // size at the current depth
+    LOOP(depth, 1);
+    for (; depth < 10 or ps < cs; ++depth) {
+        ps = cs;
+        field<hll_t> nl = nbr(CALL, hll_t{}, l);
+        u = self(CALL, nl) == l and u;
         fold_hood(CALL, [&](hll_t const& d, nullptr_t){
-            rl.insert(d);
+            hll_t ol(l);
+            l.insert(d);
             return nullptr;
-        }, std::move(nrl), nullptr);
-        s = rl.size() - s;
-        rh += s/depth;
-        rc += s*depth;
-        return t;
+        }, std::move(nl), nullptr);
+        cs = l.size();
+        h += (cs-ps)/depth;
+        c += (cs-ps)*depth;
     }
+    node.storage(tags::diameter{}) = depth-1;
+    u = old(CALL, hll_t{}, l) == l and u;
+    return t;
 }
 FUN_EXPORT hyperANF_t = export_list<hll_t>;
 
@@ -177,11 +180,10 @@ FUN void centrality_test(ARGS, bool reactive) { CODE
     node.storage(tags::degree_centrality{}) = degree(CALL);
     if (not reactive)
         node.storage(tags::pagerank_centrality{}) = page_rank(CALL);
-    hll_t l;
     real_t h, c;
-    bool b;
-    fcpp::tie(l, h, c, b) = hyperANF(CALL, estimated_diameter, true);
-    //if (reactive and old(CALL, hll_t(), l) == l and b) node.disable_send();
+    bool u;
+    fcpp::tie(h, c, u) = hyperANF(CALL);
+    if (reactive and u) node.disable_send();
     node.storage(tags::harmonic_centrality{}) = h;
     node.storage(tags::closeness_centrality{}) = 1/c;
     node.storage(tags::centrality_c{}) = color::hsva(h*3.6, 1, 1);
@@ -267,6 +269,7 @@ DECLARE_OPTIONS(opt,
     >,
     tuple_store<
         url,                    std::string,
+        diameter,               size_t,
         true_count,             double,
         hll_count,          	double,
         mpc_count,              double,
@@ -282,6 +285,7 @@ DECLARE_OPTIONS(opt,
         node_size,          	double
     >,
     aggregators<
+        diameter,               count_aggregator<double>,
         true_count,             aggregator::mean<double>,
         hll_count,              count_aggregator<double>,
         mpc_count,              count_aggregator<double>,
