@@ -77,17 +77,8 @@ namespace tags {
     struct node_shape {};
 }
 
-FUN real_t hll_size_count(ARGS) { CODE
-    return nbr(CALL, hll_t(node.uid), [&](field<hll_t> x){
-        hll_t c(self(CALL, x));
-        fold_hood(CALL, [&](hll_t const& d, nullptr_t){
-            c.insert(d);
-            return nullptr;
-        }, x, nullptr);
-        return c;
-    }).size();
-}
-FUN_EXPORT hll_size_count_t = export_list<hll_t>;
+
+// NETWORK SIZE COUNTING TEST
 
 FUN real_t mpc_size_count(ARGS) { CODE
     device_t source_id = 0;
@@ -121,25 +112,28 @@ FUN real_t wmp_size_count(ARGS) { CODE
 }
 FUN_EXPORT wmp_size_count_t = export_list<bis_distance_t, wmp_collection_t<real_t>, broadcast_t<real_t,real_t>>;
 
-FUN tuple<hll_t, real_t, real_t> hyperANF(ARGS, size_t depth, bool source) { CODE
-    if (depth == 0) {
-        hll_t c;
-        if (source) c.insert(node.uid);
-        return {c, 0, 0};
-    } else {
-        hll_t rc;
-        real_t rr, rs;
-        fcpp::tie(rc, rr, rs) = hyperANF(CALL, depth-1, source);
-        hll_t nc(rc);
+FUN real_t hll_size_count(ARGS) { CODE
+    return nbr(CALL, hll_t(node.uid), [&](field<hll_t> x){
+        hll_t c(self(CALL, x));
         fold_hood(CALL, [&](hll_t const& d, nullptr_t){
-            nc.insert(d);
+            c.insert(d);
             return nullptr;
-        }, nbr(CALL, rc), nullptr);
-        real_t s = nc.size() - rc.size();
-        return {nc, rr + s/depth, rs + s*depth};
-    }
+        }, x, nullptr);
+        return c;
+    }).size();
 }
-FUN_EXPORT hyperANF_t = export_list<hll_t>;
+FUN_EXPORT hll_size_count_t = export_list<hll_t>;
+
+FUN void size_counting_test(ARGS) { CODE
+    node.storage(tags::true_count{}) = devices;
+    node.storage(tags::mpc_count{}) = mpc_size_count(CALL);
+    node.storage(tags::wmp_count{}) = wmp_size_count(CALL);
+    node.storage(tags::hll_count{}) = hll_size_count(CALL);
+}
+FUN_EXPORT size_counting_test_t = export_list<mpc_size_count_t, wmp_size_count_t, hll_size_count_t>;
+
+
+// NETWORK CENTRALITY TEST
 
 FUN real_t degree(ARGS) { CODE
     return node.size()-1;
@@ -153,20 +147,49 @@ FUN real_t page_rank(ARGS) { CODE
 }
 FUN_EXPORT page_rank_t = export_list<real_t, degree_t>;
 
-FUN void graph_statistics(ARGS) { CODE
-    // node counting
-    node.storage(tags::true_count{}) = devices;
-    node.storage(tags::mpc_count{}) = mpc_size_count(CALL);
-    node.storage(tags::hll_count{}) = hll_size_count(CALL);
-    // node centrality
-    node.storage(tags::degree_centrality{}) = degree(CALL);
-    node.storage(tags::pagerank_centrality{}) = page_rank(CALL);
-    auto anf = hyperANF(CALL, estimated_diameter, true);
-    node.storage(tags::closeness_centrality{}) = 1 / get<2>(anf);
-    node.storage(tags::harmonic_centrality{}) = get<1>(anf);
-    node.storage(tags::centrality_c{}) = color::hsva(get<1>(anf)*3.6, 1, 1);
+FUN tuple<hll_t, real_t, real_t, bool> hyperANF(ARGS, size_t depth, bool source) { CODE
+    if (depth == 0) {
+        hll_t c;
+        if (source) c.insert(node.uid);
+        return {c, 0, 0, true};
+    } else {
+        auto t = hyperANF(CALL, depth-1, source);
+        hll_t&  rl = get<0>(t);
+        real_t& rh = get<1>(t);
+        real_t& rc = get<2>(t);
+        bool&   rb = get<3>(t);
+        real_t s = rl.size();
+        field<hll_t> nrl = nbr(CALL, rl);
+        rb = rb and self(CALL, nrl) == rl;
+        fold_hood(CALL, [&](hll_t const& d, nullptr_t){
+            rl.insert(d);
+            return nullptr;
+        }, std::move(nrl), nullptr);
+        s = rl.size() - s;
+        rh += s/depth;
+        rc += s*depth;
+        return t;
+    }
 }
-FUN_EXPORT graph_statistics_t = export_list<mpc_size_count_t, hll_size_count_t, degree_t, page_rank_t, hyperANF_t>;
+FUN_EXPORT hyperANF_t = export_list<hll_t>;
+
+FUN void centrality_test(ARGS, bool reactive) { CODE
+    node.storage(tags::degree_centrality{}) = degree(CALL);
+    if (not reactive)
+        node.storage(tags::pagerank_centrality{}) = page_rank(CALL);
+    hll_t l;
+    real_t h, c;
+    bool b;
+    fcpp::tie(l, h, c, b) = hyperANF(CALL, estimated_diameter, true);
+    //if (reactive and old(CALL, hll_t(), l) == l and b) node.disable_send();
+    node.storage(tags::harmonic_centrality{}) = h;
+    node.storage(tags::closeness_centrality{}) = 1/c;
+    node.storage(tags::centrality_c{}) = color::hsva(h*3.6, 1, 1);
+}
+FUN_EXPORT centrality_test_t = export_list<degree_t, page_rank_t, hyperANF_t, hll_t>;
+
+
+// MOVEMENT PATTERNS
 
 FUN void disperser(ARGS) { CODE
     node.velocity() = neighbour_elastic_force(CALL, 300, 0.03) + point_elastic_force(CALL, make_vec(side,side)/2, 0, 0.005);
@@ -184,7 +207,12 @@ FUN_EXPORT walker_t = export_list<rectangle_walk_t<2>>;
 
 //! @brief Declaration of the main program.
 struct main;
-FUN_EXPORT main_t = export_list<graph_statistics_t, wmp_size_count_t, disperser_t, walker_t>;
+template <bool reactive>
+FUN_EXPORT main_t = std::conditional_t<
+    reactive,
+    centrality_test_t,
+    export_list<size_counting_test_t, centrality_test_t, disperser_t, walker_t>
+>;
 
 } // end coordination
 
@@ -219,14 +247,14 @@ using plot_t = plot::last_rows<
     >, void, 1
 >;
 
-template <bool sync>
+template <bool sync, bool reactive>
 DECLARE_OPTIONS(opt,
     parallel<true>,
     synchronised<sync>,
     program<coordination::main>,
     round_schedule<round_s<sync>>,
     dimension<dim>,
-    exports<coordination::main_t>,
+    exports<coordination::main_t<reactive>>,
     log_schedule<sequence::periodic_n<1, 0, 1, endtime>>,
     node_attributes<
         url,                std::string,
