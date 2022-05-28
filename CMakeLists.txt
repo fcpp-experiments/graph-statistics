@@ -11,11 +11,11 @@ fcpp_setup()
 project(
     graphstats
     VERSION 0.0.0
-    DESCRIPTION "Computation of graph statistics on static and dynamic graphs."
+    DESCRIPTION "Computation of graph statistics on logical and physical networks."
 )
 
 # target declaration
-fcpp_target(./run/batch.cpp   OFF)
-fcpp_target(./run/graphic.cpp ON)
-fcpp_target(./run/graph_graphic.cpp ON)
+fcpp_target(./run/logical_batch.cpp OFF)
+fcpp_target(./run/logical_gui.cpp   ON)
+fcpp_target(./run/physical_gui.cpp  ON)
 fcpp_target(./extras/graph_converter.cpp OFF)
