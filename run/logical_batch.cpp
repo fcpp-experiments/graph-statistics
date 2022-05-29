@@ -25,9 +25,10 @@ int main(int argc, char *argv[]) {
         // The network object type.
         using net_t = component::batch_graph_simulator<opt<true,true>>::net;
         // The initialisation values.
-        auto init_v = common::make_tagged_tuple<nodesinput, arcsinput, max_print_len, plotter>(
+        auto init_v = common::make_tagged_tuple<nodesinput, arcsinput, max_print_len, epsilon, plotter>(
             file + ".nodes",
             file + ".arcs",
+            0,
             0,
             &p
         );
