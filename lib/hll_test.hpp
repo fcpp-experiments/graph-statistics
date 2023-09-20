@@ -221,15 +221,26 @@ FUN_EXPORT main_t = std::conditional_t<
 using namespace component::tags;
 using namespace coordination::tags;
 
-template <bool sync>
+template <bool sync, bool reactive>
 using round_s = std::conditional_t<
     sync,
-    sequence::periodic_n<1, 0, 1, endtime+1>,
+    std::conditional_t<
+        reactive,
+        sequence::never,
+        sequence::periodic_n<1, 1, 1, endtime+1>
+    >,
     sequence::periodic<
         distribution::interval_n<times_t, 0, 1>,
         distribution::weibull_n<times_t, 10, 1, 10>,
         distribution::constant_n<times_t, endtime+2>
     >
+>;
+
+template <bool reactive>
+using log_s = std::conditional_t<
+    reactive,
+    sequence::periodic_n<1, 1, 2, 2>,
+    sequence::periodic_n<1, 0, 1, endtime>
 >;
 
 using rectangle_d = distribution::rect_n<1, 0, 0, side, side>;
@@ -254,7 +265,7 @@ DECLARE_OPTIONS(opt,
     parallel<true>,
     synchronised<sync>,
     program<coordination::main>,
-    round_schedule<round_s<sync>>,
+    round_schedule<round_s<sync, reactive>>,
     dimension<dim>,
     exports<coordination::main_t<reactive>>,
     retain<std::conditional_t<
@@ -262,7 +273,9 @@ DECLARE_OPTIONS(opt,
         metric::always,
         metric::retain<3>
     >>,
-    log_schedule<sequence::periodic_n<1, 0, 1, endtime>>,
+    reactive_delay<std::conditional_t<reactive, distribution::constant_n<times_t, 1, 1024>, sequence::never>>,
+    send_delay<distribution::constant_n<times_t, 1, 1024>>,
+    log_schedule<log_s<reactive>>,
     node_attributes<
         url,                std::string,
         uid,                device_t
