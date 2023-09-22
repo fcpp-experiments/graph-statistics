@@ -66,62 +66,22 @@ xcode-select --install
 brew install cmake asymptote doxygen
 ```
 
-### Docker container
-
-**Warning:** the graphical simulations are based on OpenGL, which is **not** available in the Docker container. Use this system for batch simulations only.
-
-Download Docker from [https://www.docker.com](https://www.docker.com), then you can download the Docker container from GitHub by typing the following command in a terminal:
-```
-docker pull docker.pkg.github.com/fcpp/fcpp/container:1.0
-```
-Alternatively, you can build the container yourself with the following command:
-```
-docker build -t docker.pkg.github.com/fcpp/fcpp/container:1.0 .
-```
-Once you have the Docker container locally available, type the following command to enter the container:
-```
-docker run -it --volume $PWD:/fcpp --workdir /fcpp docker.pkg.github.com/fcpp/fcpp/container:1.0 bash
-```
-and the following command to exit it:
-```
-exit
-```
-In order to properly link the executables in Docker, you may need to add the `-pthread` option (substitute `-O` for `-O -pthread` below).
-
-### Vagrant container
-
-**Warning:** the graphical simulations are based on OpenGL, which is **not** available in the Vagrant container. Use this system for batch simulations only.
-
-Download Vagrant from [https://www.vagrantup.com](https://www.vagrantup.com) and VirtualBox from [https://www.virtualbox.org](https://www.virtualbox.org), then type the following commands in a terminal to enter the Vagrant container:
-```
-vagrant up
-vagrant ssh
-cd fcpp
-```
-and the following commands to exit it:
-```
-exit
-vagrant halt
-```
-
-### Virtual Machines
-
-If you use a VM with a graphical interface, refer to the section for the operating system installed on it.
-
-**Warning:** the graphical simulations are based on OpenGL, and common Virtual Machine software (e.g., VirtualBox) has faulty support for OpenGL. If you rely on a virtual machine for graphical simulations, it might work provided that you select hardware virtualization (as opposed to software virtualization). However, it is recommended to use the native OS whenever possible.
-
-
 ## Execution
 
-In order to execute the simulations, type the following command in a terminal:
+### Preprocessing
+
+### Centrality Statistics
+In order to execute the statistics computation, type the following command in a terminal:
 ```
-> ./make.sh [gui] run -O [targets...]
+> ./make.sh [gui] run -O [targets...] - [params]
 ```
 You can omit the `gui` argument if you don't need the graphical user interface; or omit the `-O` argument for a debug build (instead of an optimised build). On newer Mac M1 computers, the `-O` argument may induce compilation errors: in that case, use the `-O3` argument instead.
 The possible targets are:
-- `all` (for running all targets)
-- `batch` (produces plots) runs a batch of experiments of process management
-- `graphic` (with GUI, produces plots) runs a graphic process management experiment based on the provided parameters
+- `logical_batch` (for computing the statistics on a graph in batch mode)
+- `logical_gui` (for computing the statistics on a graph with the GUI)
+- `physical_gui` (for computing the statistics on a simulated physical network with the GUI)
+
+The `logical_batch` and `logical_gui` targets take as a parameter the basename of the graph files under `input`. Such files are named `<basename>.nodes` and `<basename>.arcs`.
 
 Running the above command, you should see output about building the executables and running them, graphical simulations should pop up (if there are any in the targets), PDF plots should be produced in the `plot/` directory (if any are produced by the targets), and the textual output will be saved in the `output/` directory.
 
