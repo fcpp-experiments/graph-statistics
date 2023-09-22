@@ -69,6 +69,21 @@ brew install cmake asymptote doxygen
 ## Execution
 
 ### Preprocessing
+It is possible to download sample graphs from [UniMI repo](https://law.di.unimi.it/datasets.php).
+
+Assume you have donwloaded the `cnr-2000` datasets and stored them under `java/data` of the present repo:
+- `cnr-2000.graph`
+- `cnr-2000.properties`
+- `cnr-2000.urls` (after unzipping the downloaded archive)
+
+You can use the `HBApp` java application by issueing the following *Maven* command, from the `java` directory:
+```
+> mvn exec:java -Dexec.mainClass="HBApp" -Dexec.args="<cmd> data/<basename>"
+```
+Where `<basename>` is the basename of the graph files (e.g., `cnr-2000`), and `<cmd>` is one of the following:
+- `conv` to create a `.graph-txt` file to be further converted before being processed with FCPP (see below)
+- `enc` to do the opposite
+- `stats` to compute graph statistics with the system by Vigna et al. 
 
 ### Centrality Statistics
 In order to execute the statistics computation, type the following command in a terminal:
