@@ -17,29 +17,24 @@ namespace coordination {
 using namespace fcpp;
 
 int main(int argc, char *argv[]) {
-    // The plotter object, storing the last row of data.
-    plot_t p;
     // The name of files containing the network information.
     const std::string file = "input/" + std::string(argc > 1 ? argv[1] : "test");
-    {
-        // The network object type.
-        using net_t = component::batch_graph_simulator<opt<true,true>>::net;
-        // The initialisation values.
-        auto init_v = common::make_tagged_tuple<nodesinput, arcsinput, max_print_len, epsilon, plotter>(
-            file + ".nodes",
-            file + ".arcs",
-            0,
-            0,
-            &p
-        );
-        // Construct the network object.
-        net_t network{init_v};
-        // Run the simulation until exit.
-        network.run();
-    }
+    // The network object type.
+    using net_t = component::batch_graph_simulator<opt<true,true>>::net;
+    // The initialisation values.
+    auto init_v = common::make_tagged_tuple<nodesinput, arcsinput, max_print_len, epsilon>(
+        file + ".nodes",
+        file + ".arcs",
+        0,
+        0
+    );
+    // Construct the network object.
+    net_t network{init_v};
+    // Run the simulation until exit.
+    network.run();
     // Check deviation of computed centralities with given output file.
-    auto const& hv = common::get<aggregator::list<harmonic_centrality>>(p.back());
-    auto const& cv = common::get<aggregator::list<closeness_centrality>>(p.back());
+    auto const& hv = common::get<aggregator::list<harmonic_centrality>>(network.aggregator_tuple());
+    auto const& cv = common::get<aggregator::list<closeness_centrality>>(network.aggregator_tuple());
     assert(hv.size() == cv.size());
     std::ifstream out(file + ".out");
     size_t i = 0;
