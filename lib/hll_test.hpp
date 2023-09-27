@@ -1,4 +1,4 @@
-// Copyright © 2022 Giorgio Audrito. All Rights Reserved.
+// Copyright © 2023 Giorgio Audrito. All Rights Reserved.
 
 #include "lib/fcpp.hpp"
 
@@ -58,6 +58,8 @@ namespace tags {
     struct mpc_count {};
     //! @brief Number of nodes through WMP collection.
     struct wmp_count {};
+    //! @brief Tuple with all centralities.
+    struct all_centralities {};
     //! @brief Degree centrality.
     struct degree_centrality {};
     //! @brief PageRank centrality.
@@ -187,6 +189,8 @@ FUN void centrality_test(ARGS, bool reactive) { CODE
     node.storage(tags::harmonic_centrality{}) = h;
     node.storage(tags::closeness_centrality{}) = 1/c;
     node.storage(tags::centrality_c{}) = color::hsva(h*3.6, 1, 1);
+    node.storage(tags::all_centralities{}) = node.storage_tuple();
+    node.storage(tags::all_centralities{}) = common::make_tagged_tuple<component::tags::uid>(node.uid);
 }
 FUN_EXPORT centrality_test_t = export_list<degree_t, page_rank_t, hyperANF_t, hll_t>;
 
@@ -220,6 +224,14 @@ FUN_EXPORT main_t = std::conditional_t<
 
 using namespace component::tags;
 using namespace coordination::tags;
+
+using centrality_tuple = common::tagged_tuple_t<
+    uid,                    device_t,
+    degree_centrality,      double,
+    pagerank_centrality,    double,
+    closeness_centrality,   double,
+    harmonic_centrality,    double
+>;
 
 template <bool sync, bool reactive>
 using round_s = std::conditional_t<
@@ -291,6 +303,7 @@ DECLARE_OPTIONS(opt,
         pagerank_centrality,    double,
         closeness_centrality,   double,
         harmonic_centrality,    double,
+        all_centralities,       centrality_tuple,
         my_distance,            double,
         distance_c,             color,
         centrality_c,           color,
@@ -306,7 +319,8 @@ DECLARE_OPTIONS(opt,
         degree_centrality,      centrality_aggregator<double>,
         pagerank_centrality,    centrality_aggregator<double>,
         closeness_centrality,   centrality_aggregator<double>,
-        harmonic_centrality,    centrality_aggregator<double>
+        harmonic_centrality,    centrality_aggregator<double>,
+        all_centralities,       aggregator::list<centrality_tuple>
     >,
     plot_type<plot_t>,
     spawn_schedule<sequence::multiple_n<devices, 0>>,

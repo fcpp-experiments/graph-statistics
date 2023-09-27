@@ -1,4 +1,6 @@
-// Copyright © 2022 Giorgio Audrito. All Rights Reserved.
+// Copyright © 2023 Giorgio Audrito. All Rights Reserved.
+
+#include <algorithm>
 
 #include "lib/hll_test.hpp"
 
@@ -33,13 +35,27 @@ int main(int argc, char *argv[]) {
     // Run the simulation until exit.
     network.run();
     // Check deviation of computed centralities with given output file.
-    auto const& hv = common::get<aggregator::list<harmonic_centrality>>(network.aggregator_tuple());
-    auto const& cv = common::get<aggregator::list<closeness_centrality>>(network.aggregator_tuple());
+    std::cerr << common::get<aggregator::list<all_centralities>>(network.aggregator_tuple()) << std::endl;
+    auto hv = common::get<aggregator::list<harmonic_centrality>>(network.aggregator_tuple());
+    auto cv = common::get<aggregator::list<closeness_centrality>>(network.aggregator_tuple());
+    std::sort(hv.begin(), hv.end());
+    std::sort(cv.begin(), cv.end());
     assert(hv.size() == cv.size());
     std::ifstream out(file + ".out");
     size_t i = 0;
     double h, c, dh, dc, sdh = 0, sdc = 0, qdh = 0, qdc = 0, mdh = 0, mdc = 0, ndh = 0, ndc = 0, sh = 0, sc = 0, sfh = 0, sfc = 0;
+    std::vector<double> hr, cr;
     while (out >> h >> c) {
+        hr.push_back(h);
+        cr.push_back(c);
+    }
+    assert(out.eof());
+    assert(hr.size() == hv.size());
+    std::sort(hr.begin(), hr.end());
+    std::sort(cr.begin(), cr.end());
+    for (int i=0; i<hr.size(); ++i) {
+        h = hr[i];
+        c = cr[i];
         if (hv.size() < 20) {
             std::cout << "* " << i << ": " << hv[i] << " vs " << h << " (harmonic) - " << cv[i] << " vs " << c << " (closeness)\n";
         }
@@ -57,10 +73,7 @@ int main(int argc, char *argv[]) {
         mdc = max(mdc, dc);
         ndh = max(max(h/hv[i], hv[i]/h)-1, ndh);
         ndc = max(max(c/cv[i], cv[i]/c)-1, ndc);
-        ++i;
     }
-    assert(out.eof());
-    assert(i == hv.size());
     std::cout << "Maximum absolute error: " << mdh << " (harmonic) - " << mdc << " (closeness)\n";
     std::cout << "Maximum relative error: " << ndh << " (harmonic) - " << ndc << " (closeness)\n";
     std::cout << "Average absolute error: " << sdh/hv.size() << " (harmonic) - " << sdc/hv.size() << " (closeness)\n";
