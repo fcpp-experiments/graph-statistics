@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     std::ifstream flabs(flabsname);
     if (!flabs) {
         labels = false;
-        std::cout << "conversion without node labels " << std::endl;
+        std::cout << "conversion with dummy labels " << std::endl;
     }
 
     std::ofstream fnodes(fnodesname);
@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
 
     while (getline(fin,srow)) {
         // write node
+        slab = "dummy";
         if (labels) {
             getline(flabs,slab);
             // beware of labels with spaces
@@ -71,8 +72,8 @@ int main(int argc, char *argv[]) {
             if (found!=std::string::npos) {
                 slab = slab.substr(0,found);
             }
-            fnodes << slab << "\t";
         }
+        fnodes << slab << "\t";
         fnodes << idxnode+1;
         fnodes << std::endl;
 

@@ -10,9 +10,9 @@ file = open(sys.argv[1], "r")
 new_file = open("out_" + sys.argv[1], "w")
 
 # Loop through each line of the file
-i=1
+i=0
 for line in file:
-    if i==1:
+    if i==0:
         new_line = str(number) + "\n"
     elif i>number:
         break
