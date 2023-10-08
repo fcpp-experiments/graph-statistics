@@ -18,6 +18,8 @@ namespace coordination {
 
 using namespace fcpp;
 
+const bool SORT_RESULTS=false;
+
 int main(int argc, char *argv[]) {
     // The name of files containing the network information.
     const std::string file = "input/" + std::string(argc > 1 ? argv[1] : "test");
@@ -38,12 +40,16 @@ int main(int argc, char *argv[]) {
     std::cerr << common::get<aggregator::list<all_centralities>>(network.aggregator_tuple()) << std::endl;
     auto hv = common::get<aggregator::list<harmonic_centrality>>(network.aggregator_tuple());
     auto cv = common::get<aggregator::list<closeness_centrality>>(network.aggregator_tuple());
-    std::sort(hv.begin(), hv.end());
-    std::sort(cv.begin(), cv.end());
+    if (SORT_RESULTS) {
+        std::sort(hv.begin(), hv.end());
+        std::sort(cv.begin(), cv.end());
+    }
     assert(hv.size() == cv.size());
     std::ifstream out(file + ".out");
     size_t i = 0;
     double h, c, dh, dc, sdh = 0, sdc = 0, qdh = 0, qdc = 0, mdh = 0, mdc = 0, ndh = 0, ndc = 0, sh = 0, sc = 0, sfh = 0, sfc = 0;
+    double mdhv = 0; // value corresponding to maximum harmonic deviation
+    int mdhi = -1; // index of maximum harmonic deviation
     std::vector<double> hr, cr;
     while (out >> h >> c) {
         hr.push_back(h);
@@ -51,8 +57,10 @@ int main(int argc, char *argv[]) {
     }
     assert(out.eof());
     assert(hr.size() == hv.size());
-    std::sort(hr.begin(), hr.end());
-    std::sort(cr.begin(), cr.end());
+    if (SORT_RESULTS) {
+        std::sort(hr.begin(), hr.end());
+        std::sort(cr.begin(), cr.end());
+    }
     for (int i=0; i<hr.size(); ++i) {
         h = hr[i];
         c = cr[i];
@@ -69,12 +77,17 @@ int main(int argc, char *argv[]) {
         sdc += dc;
         qdh += dh*dh;
         qdc += dc*dc;
+        if (dh>mdh) {
+            mdhi = i;
+            mdhv = hv[i];
+        }
         mdh = max(mdh, dh);
         mdc = max(mdc, dc);
         ndh = max(max(h/hv[i], hv[i]/h)-1, ndh);
         ndc = max(max(c/cv[i], cv[i]/c)-1, ndc);
     }
     std::cout << "Maximum absolute error: " << mdh << " (harmonic) - " << mdc << " (closeness)\n";
+    std::cout << "Index maximum absolute error: " << mdhi << " with value " << mdhv << " (harmonic)\n";
     std::cout << "Maximum relative error: " << ndh << " (harmonic) - " << ndc << " (closeness)\n";
     std::cout << "Average absolute error: " << sdh/hv.size() << " (harmonic) - " << sdc/hv.size() << " (closeness)\n";
     std::cout << "Average relative error: " << sdh/sh << " (harmonic) - " << sdc/sc << " (closeness)\n";

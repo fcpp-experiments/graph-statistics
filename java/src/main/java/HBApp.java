@@ -2,6 +2,8 @@ import it.unimi.dsi.webgraph.*;
 import it.unimi.dsi.webgraph.algo.HyperBall;
 import it.unimi.dsi.webgraph.algo.NeighbourhoodFunction;
 
+import it.unimi.dsi.logging.ProgressLogger;
+
 import java.io.FileWriter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -36,7 +38,7 @@ public class HBApp {
             g = BVGraph.load(fname, 2);
             System.out.println("number of nodes: " + g.numNodes());
 
-            HyperBall hb = new HyperBall(g, null, 7, null, 0, 0, 0, false, true, true, null, 0);
+            HyperBall hb = new HyperBall(g, null, 7, new ProgressLogger(), 0, 0, 0, false, true, true, null, 0);
             hb.init();
 
             hb.iterate();
