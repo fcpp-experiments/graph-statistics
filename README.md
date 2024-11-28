@@ -76,7 +76,11 @@ Assume you have donwloaded the `cnr-2000` datasets and stored them under `java/d
 - `cnr-2000.properties`
 - `cnr-2000.urls` (after unzipping the downloaded archive)
 
-You can use the `HBApp` java application by issueing the following *Maven* command, from the `java` directory:
+You can use the `HBApp` java application by issueing the following *Maven* commands, from the `java` directory:
+```
+> mvn compile
+```
+just once for compiling, and then for executing:
 ```
 > mvn exec:java -Dexec.mainClass="HBApp" -Dexec.args="<cmd> data/<basename>"
 ```
